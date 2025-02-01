@@ -1,11 +1,11 @@
 package com.github.rzah94.weatherviewer.service;
 
-import com.github.rzah94.weatherviewer.dto.RegisterUserDto;
+import com.github.rzah94.weatherviewer.dto.CustomUserDetailsDto;
+import com.github.rzah94.weatherviewer.dto.RegistrationUserDto;
 import com.github.rzah94.weatherviewer.entity.User;
 import com.github.rzah94.weatherviewer.exception.UserAlreadyExistsException;
 import com.github.rzah94.weatherviewer.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,30 +25,33 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
+    public CustomUserDetailsDto loadUserByUsername(String username) throws UsernameNotFoundException {
 
         return userRepository.findByLogin(username)
-                .map(u -> new org.springframework.security.core.userdetails.User(
-                        u.getLogin(),
-                        u.getPassword(),
-                        new ArrayList<>()
-                ))
-                .orElseThrow(() -> new UsernameNotFoundException("User " + username + " not found"));
+                .map(user -> new CustomUserDetailsDto(
+                        user.getLogin(),
+                        user.getPassword(),
+                        new ArrayList<>())
+                )
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User " + username + " not found")
+                );
     }
 
-    public boolean userExists(String username) {
-        return userRepository.existsByLogin(username);
-    }
-
-    public void save(RegisterUserDto registerUserDto) {
-        var user = new User();
-        user.setLogin(registerUserDto.getUsername());
-        user.setPassword(passwordEncoder.encode(registerUserDto.getPassword()));
-
+    public RegistrationUserDto save(RegistrationUserDto registerUserDto) throws UserAlreadyExistsException {
+        var user = User.builder()
+                .login(registerUserDto.getUsername())
+                .password(passwordEncoder.encode(registerUserDto.getPassword()))
+                .build();
         try {
-            userRepository.save(user);
-        } catch(DataIntegrityViolationException e) {
+            var savedUser = userRepository.save(user);
+
+            return RegistrationUserDto.builder()
+                    .username(savedUser.getLogin())
+                    .password(savedUser.getPassword())
+                    .build();
+
+        } catch (DataIntegrityViolationException e) {
             throw new UserAlreadyExistsException("User " + registerUserDto.getUsername() + " already exists");
         }
 
