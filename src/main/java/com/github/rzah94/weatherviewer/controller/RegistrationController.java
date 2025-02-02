@@ -1,6 +1,6 @@
 package com.github.rzah94.weatherviewer.controller;
 
-import com.github.rzah94.weatherviewer.dto.RegisterUserDto;
+import com.github.rzah94.weatherviewer.dto.RegistrationUserDto;
 import com.github.rzah94.weatherviewer.exception.UserAlreadyExistsException;
 import com.github.rzah94.weatherviewer.service.UserService;
 import jakarta.validation.Valid;
@@ -30,12 +30,12 @@ public class RegistrationController {
             return "redirect:/";
         }
 
-        model.addAttribute("user", new RegisterUserDto());
+        model.addAttribute("user", new RegistrationUserDto());
         return "register";
     }
 
     @PostMapping
-    public String processRegister(@Valid @ModelAttribute("user") RegisterUserDto registerUserDto, BindingResult bindingResult, Model model) {
+    public String processRegister(@Valid @ModelAttribute("user") RegistrationUserDto registerUserDto, BindingResult bindingResult, Model model) {
 
         if (bindingResult.hasErrors()) {
             return "register";
